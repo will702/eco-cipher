@@ -1,0 +1,167 @@
+IoT System
+  Eco-Cipher’s IoT device is the Eco-Cipher Edge Verifier, an ESP32-based field device
+  installed near a factory wastewater or emission output line. The physical chain is:
+
+  Waste stream -> sensors -> ESP32 -> edge validation -> local alerts -> wireless upload ->
+  dashboard/backend -> AI matchmaker + proof/reporting layer
+
+  Source: context/01_hardware_blueprint.md:1
+
+  The device reads these signals:
+
+  | Sensor | What it measures | Why it matters |
+  |---|---:|---|
+  | pH sensor | Acidity / alkalinity | Detects unsafe chemical profile |
+  | Turbidity sensor | Cloudiness / contamination | Indicates organic or polluted load |
+  | Flow sensor | Liters per minute + volume | Confirms real stream movement |
+  | DS18B20 temperature | Liquid temperature | Detects abnormal process conditions |
+  | Gas sensor | Emission risk signal | Adds environmental risk context |
+  | Energy/current sensor | Power draw | Adds carbon/process context |
+
+  The ESP32 is not just a dumb data logger. It performs edge validation locally before the
+  platform receives the payload.
+
+  How The IoT Device Works
+
+  1. Boot + connect
+     The ESP32 starts, initializes sensors, display, LEDs, buzzer, and connects to Wi-Fi.
+  2. Read physical sensors
+     It samples pH, turbidity, flow, temperature, gas, and energy/current values.
+  3. Classify the stream
+     The firmware classifies the payload as:
+
+     | Status | Meaning | Local output |
+     |---|---|---|
+     | VERIFIED | Readings are inside normal bands | Green LED, buzzer off |
+     | WARNING | Some readings are near unsafe ranges | Yellow LED, short beep |
+     | ANOMALY | Severe breach, zero flow, sensor issue, missing/bad data | Red LED, repeated
+     buzzer |
+
+     Source: context/03_edge_validation_rules.md:1
+  4. Calculate trust scores
+     The device computes a data_quality_score based on completeness, normal range, signal
+     stability, uptime, and transmission success.
+  5. Build payload
+     The firmware creates a JSON payload with device ID, factory alias, sensor readings,
+     status, scores, AI classification fields, anomaly reasons, and a hash.
+
+     Example payload shape:
+
+     {
+       "device_id": "EC-EDGE-001",
+       "factory_alias": "Factory_A",
+       "sensor_type": "wastewater_edge_verifier",
+       "ph": 7.12,
+       "turbidity_raw": 420,
+       "flow_rate_lpm": 2.4,
+       "temperature_c": 28.7,
+       "edge_status": "VERIFIED",
+       "anomaly_flag": false,
+       "data_quality_score": 0.91,
+       "payload_hash": "sha256_payload_hash"
+     }
+
+     Source: context/04_payload_schema.json:1
+
+  6. Hash the payload
+     The ESP32 serializes the payload, hashes it with SHA-256, then appends payload_hash.
+     This gives the platform a fingerprint of the exact device reading.
+
+     Source: firmware/EcoCipherEdgeVerifier/EcoCipherEdgeVerifier.ino:249
+  7. Upload to backend
+     The firmware sends the payload over HTTP to an API endpoint. The blueprint also allows
+     Wi-Fi, MQTT, or HTTP.
+
+     Source: firmware/EcoCipherEdgeVerifier/EcoCipherEdgeVerifier.ino:316
+
+  How It Connects To ERP
+  The current repo models the device, payload, dashboard, proof flow, and exchange flow. It
+  does not yet implement a real ERP connector. The right ERP integration would sit behind the
+  backend/dashboard layer.
+
+  Recommended integration path:
+
+  ESP32 -> Eco-Cipher API -> validation/proof service -> ERP adapter -> ERP records
+
+  ERP objects that should be created or updated:
+
+  | Eco-Cipher data | ERP object |
+  |---|---|
+  | device_id | IoT device / asset master |
+  | factory_alias | Plant, site, or vendor/customer account |
+  | timestamp | Inspection / measurement event time |
+  | ph, turbidity_raw, flow_rate_lpm, temperature_c | Environmental measurement record |
+  | estimated_volume_l | Waste batch quantity |
+  | edge_status | Quality/compliance status |
+  | anomaly_flag, anomaly_reasons | Exception / nonconformance ticket |
+  | payload_hash | Audit evidence reference |
+  | ai_waste_class | Material/waste category |
+  | ai_match_confidence | Receiver recommendation confidence |
+  | receiver candidate | Transfer order, sales order, recycling order, or internal movement |
+  | carbon context | ESG / MRV / carbon accounting record |
+
+  For example:
+
+  - If edge_status = VERIFIED, ERP can create a verified waste batch and allow matching or
+    transfer.
+  - If edge_status = WARNING, ERP can create the batch but mark it for operator
+    acknowledgement.
+  - If edge_status = ANOMALY, ERP should block settlement/matching and open a manual review
+    or compliance exception.
+  - If the dashboard confirms a receiver, ERP can create a transfer, dispatch, recycling, or
+    settlement document.
+  - The payload_hash becomes the audit link between physical sensor evidence and ERP business
+    records.
+
+  So the ERP should not trust dashboard UI state alone. It should trust the backend’s
+  accepted payload and hash state.
+
+  Dashboard Flow
+  The dashboard is a React/Vite simulator that walks the user through the full proof
+  lifecycle. Its main route state supports these views:
+
+  overview, edge-ai, hardware, matchmaker, zkgrid, exchange, proofs, reports
+
+  Source: dashboard/src/main.tsx:12
+
+  The core proof stages are:
+
+  Sense -> Validate -> Hash -> Upload -> Match -> Report
+
+  Source: dashboard/src/main.tsx:15
+
+  Dashboard view explanation:
+
+  | View | Purpose |
+  |---|---|
+  | Overview | Shows the full factory-to-report story |
+  | Edge Verify | Shows live sensor stream, status, validation, payload, wiring, and proof
+  commitment |
+  | Hardware CAD | Shows the physical verifier in 3D with proof-stage overlays |
+  | AI Matchmaker | Ranks receiver factories after proof is usable |
+  | Proof Ledger / ZK Grid | Shows public proof signals without exposing raw factory data |
+  | Settlement | Shows exchange and carbon/credit consequences |
+  | Evidence | Shows current hash, proof state, and recent proof records |
+  | Reports | Converts proof outcome into compliance/MRV-style reporting output |
+
+  Source: dashboard/src/main.tsx:122
+
+  End-To-End Flow
+
+  1. Factory A produces wastewater.
+  2. Edge Verifier reads the waste stream.
+  3. ESP32 validates sensor values locally.
+  4. Device shows green/yellow/red state with OLED, LED, and buzzer.
+  5. ESP32 builds JSON payload.
+  6. ESP32 hashes the payload.
+  7. Payload is uploaded to backend/dashboard.
+  8. Dashboard shows the live sensor state and proof stage.
+  9. If valid, AI matchmaker recommends a compatible receiver factory.
+  10. Proof ledger records the hash/evidence signal.
+  11. Exchange or settlement view confirms the business consequence.
+  12. Report view creates compliance-ready output.
+  13. ERP consumes the accepted event to create or block business documents.
+
+  In short: the IoT device creates trusted physical evidence, the dashboard explains and
+  controls the proof workflow, and the ERP turns the verified proof into operational records
+  like waste batch, compliance event, receiver match, settlement, or exception ticket.

@@ -1,0 +1,22 @@
+Category,Component,Quantity,Priority,Notes
+Controller,ESP32 DevKit V1,1,Must-have,Main microcontroller with Wi-Fi
+Sensor,pH sensor module,1,Must-have,Wastewater chemical profile
+Sensor,Turbidity sensor,1,Must-have,Cloudiness/contamination
+Sensor,Water flow sensor YF-S201,1,Must-have,Flow rate and volume
+Sensor,DS18B20 waterproof temperature sensor,1,Recommended,Process temperature
+Display,OLED I2C 0.96 inch,1,Must-have,Local status display
+Indicator,Green LED,1,Must-have,Verified status
+Indicator,Yellow LED,1,Must-have,Warning status
+Indicator,Red LED,1,Must-have,Anomaly status
+Audio,Active buzzer,1,Recommended,Alert signal
+Input,Push button,1,Recommended,Calibration/demo trigger
+Passive,220 ohm resistor,3,Must-have,LED protection
+Passive,4.7k ohm resistor,1,Must-have,DS18B20 pull-up
+Wiring,Jumper wires,1 set,Must-have,Connections
+Base,Breadboard or perfboard,1,Must-have,Prototype wiring
+Mechanical,Silicone/PVC tube,1,Must-have,Water flow demo
+Mechanical,Small water container,2,Must-have,Input/output sample
+Mechanical,Acrylic/wood base,1,Recommended,Demo base
+Mechanical,3D printed enclosure,1,Optional,Professional look
+Optional,MQ-135 gas sensor,1,Optional,Emission simulation
+Optional,PZEM-004T or ACS712,1,Optional,Energy/carbon logic

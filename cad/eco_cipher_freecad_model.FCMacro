@@ -1,0 +1,1 @@
+exec(open("/Users/willson/Downloads/eco_cipher_hardware_blueprint (1)/cad/eco_cipher_freecad_model.py").read())

@@ -1,0 +1,15 @@
+{
+  "device_id": "EC-EDGE-001",
+  "factory_alias": "Factory_A",
+  "timestamp": "2026-08-01T10:21:00Z",
+  "sensor_type": "wastewater_edge_verifier",
+  "ph": 7.12,
+  "turbidity_raw": 420,
+  "flow_rate_lpm": 2.4,
+  "temperature_c": 28.7,
+  "estimated_volume_l": 16.8,
+  "edge_status": "VERIFIED",
+  "anomaly_flag": false,
+  "data_quality_score": 0.91,
+  "payload_hash": "sha256_payload_hash"
+}
