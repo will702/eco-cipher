@@ -197,12 +197,3 @@ Minimum checks by subsystem:
 | CAD | Regenerate FreeCAD/OpenSCAD outputs and inspect STL/STEP files |
 | Docs | Review Markdown rendering and links |
 
-## Notes For Agents
-
-- Follow [`AGENTS.md`](AGENTS.md).
-- Prefix repository shell commands with `rtk`.
-- Treat `context/` as the source specification.
-- Avoid overwriting source specs unless the requested change explicitly requires it.
-- Keep generated outputs in their existing generated/output folders.
-- This checkout may not have Git history; do not assume `git status` or `git log` is available.
-
